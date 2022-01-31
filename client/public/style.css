@@ -1,0 +1,17 @@
+body {
+    background-color: darkslateblue;
+}
+.center {
+    text-align: center;
+}
+.titletext {
+    color: white;
+    padding-top:10px;
+}
+.flipimg {
+    width:250px;
+    height:250px;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
