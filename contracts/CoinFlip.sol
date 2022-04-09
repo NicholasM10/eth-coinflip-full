@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.4.20;
+pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
@@ -10,35 +10,30 @@ contract CoinFlip is Ownable {
     //0.1 eth by default
     uint128 betAmountInGwei = 100000000000000000;
     //Player addresses
-    address playerHeads;
-    address playerTails;
+    //Default is 0 = heads 1 = tails. Possible TO-DO: Make dynamic number of players.
+    address[2] players;
     //Winner index
     uint8 winningPlayerIndex;
-    //Contract Owner
-    address owner;
-
-    constructor() {
-        owner = msg.sender; // setting the contract creator
-    }
 
     function updateBetAmount(uint128 newBetAmount) external onlyOwner {
         betAmountInGwei = newBetAmount;
     }
 
+
     //Determine better's order and process the bet.
-    function acceptBet() public {
+    function acceptBet() public payable {
         if(currentBetCount == 0)
         {
-            require(msg.value == betAmountInGwei);
-            //
-            playerHeads = msg.sender;
+            require(msg.value == betAmountInGwei, "Incorrect Amount of ETH Received");
+
+            players[currentBetCount] = msg.sender;
             currentBetCount++;
         } 
         else if(currentBetCount == 1)
         {
-            require(msg.value == betAmountInGwei);
+            require(msg.value == betAmountInGwei, "Incorrect Amount of ETH Received");
             
-            playerTails = msg.sender;
+            players[currentBetCount] = msg.sender;
             currentBetCount++;
         }
         if(currentBetCount == 2)
@@ -47,21 +42,19 @@ contract CoinFlip is Ownable {
         }
     }
 
-    function processBet() internal payable {
-        require(playerHeads != 0);
-        require(playerTails != 0);
+    function processBet() private {
+        require(players[0] != address(0));
+        require(players[1] != address(0));
 
-        winningPlayerIndex = random() % 2;
+        winningPlayerIndex = uint8(random());
     }
 
     function random() private view returns (uint) {
-        //Convert hash to integer
-        return uint(keccak256(abi.encodePacked(block.difficulty, block.timestamp, 2)));
-    }
+        return uint(keccak256(abi.encodePacked(block.difficulty, block.timestamp, players.length)));
+    } 
 
-    function rewardWinner() internal payable 
-    {
-
+    function rewardWinner() public payable {
+        payable(players[winningPlayerIndex]).transfer(betAmountInGwei * (players.length));
     }
 
 }
